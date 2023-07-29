@@ -30,7 +30,7 @@ int angle() {
   //function that measures the angle of the arrow and calculates the corresponding LED, which is returend
   float angle_measured = as5047p.readAngle() + direction_offset;
   int angle_led = map(angle_measured, 0 + direction_offset, 359 + direction_offset, 49, 0);
-    Serial.println(angle_led);
+  //Serial.println(angle_led);
   return angle_led;
 }
 
@@ -131,7 +131,7 @@ void play_field_animation(int current_field){
     case 5:
     //simon drinks -> Highlight Simon's position
     fill_solid 	(leds, 150, CRGB::Black);
-    for (int i; i < 6; i++){
+    for (int i = 0; i < 5; i++){
         leds[simon-2+i] = CRGB::Red;
     }
     FastLED.show();
