@@ -96,10 +96,12 @@ void play_field_animation(int current_field){
     case 6:
     //all
     fill_solid 	(leds, 150, CRGB::Red);
+    FastLED.show();
     break;
     case 2:
     //left side
     fill_solid 	(leds, 25, CRGB::Red);
+    FastLED.show();
     break;
     case 3:
     case 8:
@@ -110,13 +112,6 @@ void play_field_animation(int current_field){
     case 9:
     //drink and spin again -> Flash field and do a rotating pattern with fields?
     fill_solid 	(leds, 150, CRGB::Black);
-    FastLED.show();
-    delay(500);
-    highlight_field(current_field);
-    delay(500);
-    fill_solid 	(leds, 150, CRGB::Black);
-    FastLED.show();
-    delay(500);
     highlight_field(0);
     highlight_field(2);
     highlight_field(4);
@@ -147,6 +142,8 @@ void play_field_animation(int current_field){
     for (int i = 25; i < 50; i++){
       leds[i] = CRGB::Red;
     }
+    leds[0] = CRGB::Red;
+    FastLED.show();
     break;
 
   }
@@ -167,21 +164,21 @@ void setup() {
   // choose Simon
   pinMode(simon_button, INPUT_PULLUP);
   while(not digitalRead(simon_button)){
-  fill_solid 	(leds, 150, CRGB::Black);
-  int led = angle();
-  leds[led] = CRGB::Red;
-  FastLED.show();
-  simon = led;
+    fill_solid 	(leds, 150, CRGB::Black);
+    int led = angle();
+    leds[led] = CRGB::Red;
+    FastLED.show();
+    simon = led;
   }
   //confirm selected Simon
   leds[simon] = CRGB::Red;
   FastLED.show();
-  delay(500);
+  delay(1000);
   leds[simon] = CRGB::Black;
   FastLED.show();
   delay(500);
   leds[simon] = CRGB::Red;
-  delay(500);
+  delay(1000);
   //clear canvas
   fill_solid 	(leds, 150, CRGB::Black);
   FastLED.show();
@@ -189,8 +186,8 @@ void setup() {
   int led = angle();
   leds[led] = CRGB::Red;
   FastLED.show();
-  while (stationary(led)){
-    delay(1);
+  while (led == angle()){
+    delay(10);
   }
 }
 
@@ -208,7 +205,11 @@ void loop() {
     highlight_field(active_field);
     FastLED.show();
     delay(300);
-    play_field_animation(active_field);
+    fill_solid 	(leds, 150, CRGB::Black);
+    FastLED.show();
+    while (current_LED == angle()){
+      play_field_animation(active_field);
+    }
   }
   else{
     //set current LED
