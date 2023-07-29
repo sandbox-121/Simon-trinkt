@@ -16,27 +16,20 @@ CRGB leds[NUM_LEDS];
 #define FRAMES_PER_SECOND  120
 
 //program specific setup
-#define CYCLE_TIME 1
-int counter = 0;
-int last_position = 100;
-int compare_position = 100;
+#define CYCLE_TIME 1 //delay in main loop in ms
+int counter = 0; //used for checking main loop repetitions
+int last_position = 100; //initialize fist comparison position for stationary check
+int compare_position = 100; //initialize second comparison position for stationary check 
+#define direction_offset 0 //If arrow and active LED on board donm't match up, given in degrees, should always be positive
+char colour[] = "Red"; //colour of LEDs
+int simon = 27;
+const int simon_button = 5; // pick a suitable button; configure input pulldown
 
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-  delay(3000); // 3 second delay for recovery
-  
-  // tell FastLED about the LED strip configuration
-  FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-
-  // set master brightness control
-  FastLED.setBrightness(BRIGHTNESS);
-}
 
 int angle() {
   //function that measures the angle of the arrow and calculates the corresponding LED, which is returend
-  float angle_measured = as5047p.readAngle();
-  int angle_led = map(angle_measured, 0 , 359, 49, 0);
+  float angle_measured = as5047p.readAngle() + direction_offset;
+  int angle_led = map(angle_measured, 0 + direction_offset, 359 + direction_offset, 49, 0);
     Serial.println(angle_led);
   return angle_led;
 }
@@ -58,7 +51,6 @@ bool stationary(int latest_position){
   }
 }
 
-
 void draw_line(int head_led){
     int line_leds[9];
     if (head_led == 50){
@@ -78,10 +70,10 @@ int identify_field(int current_LED){
 void highlight_field(int current_field){
   //highlight current slice of the field (all 6 LEDs on the outer circle and both border lines)
   // calculate lower bound of slice
-  int lower_LED = current_field *5;
+  int lower_LED = current_field * 5;
   // turn on border, catch turning over at 49
   for (int i = 0; i < 6; i++){
-    if(lower_LED+i >49){
+    if(lower_LED + i > 49){
       leds[0] = CRGB::Red;
     }
     else{
@@ -97,7 +89,7 @@ void highlight_field(int current_field){
 void play_field_animation(int current_field){
   switch (current_field){
     case 0:
-    // left neighbor
+    // left neighbor -> Chase to the left
 
     break;
     case 1:
@@ -111,22 +103,94 @@ void play_field_animation(int current_field){
     break;
     case 3:
     case 8:
-    //you drink
+    //you drink -> Flash current field
     
     break;
     case 4:
     case 9:
-    //drink and spin again
-    
+    //drink and spin again -> Flash field and do a rotating pattern with fields?
+    fill_solid 	(leds, 150, CRGB::Black);
+    FastLED.show();
+    delay(500);
+    highlight_field(current_field);
+    delay(500);
+    fill_solid 	(leds, 150, CRGB::Black);
+    FastLED.show();
+    delay(500);
+    highlight_field(0);
+    highlight_field(2);
+    highlight_field(4);
+    highlight_field(6);
+    highlight_field(8);
+    FastLED.show();
+    delay(500);
+    fill_solid 	(leds, 150, CRGB::Black);
+    highlight_field(1);
+    highlight_field(3);
+    highlight_field(5);
+    highlight_field(7);
+    highlight_field(9);
+    FastLED.show();
+    delay(500);
     break;
     case 5:
-    //simon drinks
-
+    //simon drinks -> Highlight Simon's position
+    fill_solid 	(leds, 150, CRGB::Black);
+    for (int i; i < 6; i++){
+        leds[simon-2+i] = CRGB::Red;
+    }
+    FastLED.show();
+    delay(500);
     break;
     case 7:
     //right side
+    for (int i = 25; i < 50; i++){
+      leds[i] = CRGB::Red;
+    }
     break;
 
+  }
+}
+
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  delay(3000); // 3 second delay for recovery
+  
+  // tell FastLED about the LED strip configuration
+  FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+
+  // set master brightness control
+  FastLED.setBrightness(BRIGHTNESS);
+
+  // choose Simon
+  pinMode(simon_button, INPUT_PULLUP);
+  while(not digitalRead(simon_button)){
+  fill_solid 	(leds, 150, CRGB::Black);
+  int led = angle();
+  leds[led] = CRGB::Red;
+  FastLED.show();
+  simon = led;
+  }
+  //confirm selected Simon
+  leds[simon] = CRGB::Red;
+  FastLED.show();
+  delay(500);
+  leds[simon] = CRGB::Black;
+  FastLED.show();
+  delay(500);
+  leds[simon] = CRGB::Red;
+  delay(500);
+  //clear canvas
+  fill_solid 	(leds, 150, CRGB::Black);
+  FastLED.show();
+  //keep dot static until first spin without starting a field animation
+  int led = angle();
+  leds[led] = CRGB::Red;
+  FastLED.show();
+  while (stationary(led)){
+    delay(1);
   }
 }
 
@@ -160,5 +224,4 @@ void loop() {
   //show canvas
   FastLED.show();
   delay(CYCLE_TIME);
-
 }
