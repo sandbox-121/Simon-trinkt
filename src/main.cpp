@@ -20,16 +20,18 @@ CRGB leds[NUM_LEDS];
 int counter = 0; //used for checking main loop repetitions
 int last_position = 100; //initialize fist comparison position for stationary check
 int compare_position = 100; //initialize second comparison position for stationary check 
-#define direction_offset 0 //If arrow and active LED on board donm't match up, given in degrees, should always be positive
-char colour[] = "Red"; //colour of LEDs
+#define direction_offset 270 //If arrow and active LED on board donm't match up, given in degrees, should always be positive
 int simon = 27;
-const int simon_button = 5; // pick a suitable button; configure input pulldown
+const int simon_button = 5; // pick a suitable button; configure input pulldown and connect button between GND and chosen pin
 
 
 int angle() {
   //function that measures the angle of the arrow and calculates the corresponding LED, which is returend
   float angle_measured = as5047p.readAngle() + direction_offset;
-  int angle_led = map(angle_measured, 0 + direction_offset, 359 + direction_offset, 49, 0);
+  if (angle_measured > 360){
+    angle_measured = angle_measured - 360;
+  }
+  int angle_led = map(angle_measured, 0, 359, 49, 0);
   //Serial.println(angle_led);
   return angle_led;
 }
@@ -106,11 +108,16 @@ void play_field_animation(int current_field){
     case 3:
     case 8:
     //you drink -> Flash current field
-    
+    fill_solid 	(leds, 150, CRGB::Black);
+    FastLED.show();
+    delay(500);
+    highlight_field(current_field);
+    FastLED.show();
+    delay(500);
     break;
     case 4:
     case 9:
-    //drink and spin again -> Flash field and do a rotating pattern with fields?
+    //drink and spin again -> Flash field and do a rotating pattern with fields
     fill_solid 	(leds, 150, CRGB::Black);
     highlight_field(0);
     highlight_field(2);
@@ -154,6 +161,7 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   delay(3000); // 3 second delay for recovery
+   
   
   // tell FastLED about the LED strip configuration
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
