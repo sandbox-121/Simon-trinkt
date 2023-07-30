@@ -92,7 +92,15 @@ void play_field_animation(int current_field){
   switch (current_field){
     case 0:
     // left neighbor -> Chase to the left
-
+    for (int i = 49; i > -1; i--){
+      leds[i] = CRGB::Red;
+      if(i == 49){
+        leds[0] = CRGB::Black;  
+      }
+      leds[i+1] = CRGB::Black;
+      FastLED.show();
+      delay(20);
+    }
     break;
     case 1:
     case 6:
