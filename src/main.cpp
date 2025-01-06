@@ -12,8 +12,9 @@ AS5X47 as5047p(slaveSelectPin);
 #define COLOR_ORDER GRB
 #define NUM_LEDS    150  
 CRGB leds[NUM_LEDS];
-#define BRIGHTNESS          25
+#define BRIGHTNESS          19
 #define FRAMES_PER_SECOND  120
+#define color CRGB::Blue
 
 //program specific setup
 #define CYCLE_TIME 1 //delay in main loop in ms
@@ -60,7 +61,7 @@ void draw_line(int head_led){
     }
     for (int i = 0; i < 10; i++){
       line_leds[i] = (head_led + 1) / 5  * 10 + 50 + i;
-      leds[line_leds[i]] = CRGB::Blue;
+      leds[line_leds[i]] = color;
     }
 }
 
@@ -76,10 +77,10 @@ void highlight_field(int current_field){
   // turn on border, catch turning over at 49
   for (int i = 0; i < 6; i++){
     if(lower_LED + i > 49){
-      leds[0] = CRGB::Blue;
+      leds[0] = color;
     }
     else{
-    leds[lower_LED + i] = CRGB::Blue;
+    leds[lower_LED + i] = color;
     }
   }
   //draw lower line
@@ -93,7 +94,7 @@ void play_field_animation(int current_field){
     case 0:
     // left neighbor -> Chase to the left
     for (int i = 49; i > -1; i--){
-      leds[i] = CRGB::Blue;
+      leds[i] = color;
       if(i == 49){
         leds[0] = CRGB::Black;  
       }
@@ -105,12 +106,12 @@ void play_field_animation(int current_field){
     case 1:
     case 6:
     //all
-    fill_solid 	(leds, 150, CRGB::Blue);
+    fill_solid 	(leds, 150, color);
     FastLED.show();
     break;
     case 2:
     //left side
-    fill_solid 	(leds, 25, CRGB::Blue);
+    fill_solid 	(leds, 25, color);
     FastLED.show();
     break;
     case 3:
@@ -147,7 +148,7 @@ void play_field_animation(int current_field){
     //simon drinks -> Highlight Simon's position
     fill_solid 	(leds, 150, CRGB::Black);
     for (int i = 0; i < 5; i++){
-        leds[simon-2+i] = CRGB::Blue;
+        leds[simon-2+i] = color;
     }
     FastLED.show();
     delay(500);
@@ -155,9 +156,9 @@ void play_field_animation(int current_field){
     case 7:
     //right side
     for (int i = 25; i < 50; i++){
-      leds[i] = CRGB::Blue;
+      leds[i] = color;
     }
-    leds[0] = CRGB::Blue;
+    leds[0] = color;
     FastLED.show();
     break;
 
@@ -182,25 +183,25 @@ void setup() {
   while(not digitalRead(simon_button)){
     fill_solid 	(leds, 150, CRGB::Black);
     int led = angle();
-    leds[led] = CRGB::Blue;
+    leds[led] = color;
     FastLED.show();
     simon = led;
   }
   //confirm selected Simon
-  leds[simon] = CRGB::Blue;
+  leds[simon] = color;
   FastLED.show();
   delay(1000);
   leds[simon] = CRGB::Black;
   FastLED.show();
   delay(500);
-  leds[simon] = CRGB::Blue;
+  leds[simon] = color;
   delay(1000);
   //clear canvas
   fill_solid 	(leds, 150, CRGB::Black);
   FastLED.show();
   //keep dot static until first spin without starting a field animation
   int led = angle();
-  leds[led] = CRGB::Blue;
+  leds[led] = color;
   FastLED.show();
   while (led == angle()){
     delay(10);
@@ -229,7 +230,7 @@ void loop() {
   }
   else{
     //set current LED
-    leds[current_LED] = CRGB::Blue;
+    leds[current_LED] = color;
 
     //check if current LED is on a line and turn on line
     int div_line = current_LED % 5;
