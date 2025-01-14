@@ -14,7 +14,6 @@ AS5X47 as5047p(slaveSelectPin);
 CRGB leds[NUM_LEDS];
 #define BRIGHTNESS          19
 #define FRAMES_PER_SECOND  120
-#define color CRGB::Blue
 
 //program specific setup
 #define CYCLE_TIME 1 //delay in main loop in ms
@@ -25,6 +24,16 @@ int compare_position = 100; //initialize second comparison position for stationa
 int simon = 27;
 const int simon_button = 5; // pick a suitable button; configure input pulldown and connect button between GND and chosen pin
 
+CRGBPalette16 myPalette;
+int colorindex = 16;
+
+void SetupPalette(){
+myPalette = CRGBPalette16(
+                                   CRGB::Red,  CRGB::Blue,  CRGB::Black,  CRGB::Blue,
+                                   CRGB::Blue, CRGB::Blue, CRGB::Blue,  CRGB::Blue,
+                                   CRGB::Blue,  CRGB::Blue,  CRGB::Blue,  CRGB::Blue,
+                                   CRGB::Blue, CRGB::Blue, CRGB::Blue,  CRGB::Blue );
+}
 
 int angle() {
   //function that measures the angle of the arrow and calculates the corresponding LED, which is returend
@@ -61,7 +70,7 @@ void draw_line(int head_led){
     }
     for (int i = 0; i < 10; i++){
       line_leds[i] = (head_led + 1) / 5  * 10 + 50 + i;
-      leds[line_leds[i]] = color;
+      leds[line_leds[i]] = ColorFromPalette(myPalette, colorindex);
     }
 }
 
@@ -77,10 +86,10 @@ void highlight_field(int current_field){
   // turn on border, catch turning over at 49
   for (int i = 0; i < 6; i++){
     if(lower_LED + i > 49){
-      leds[0] = color;
+      leds[0] = ColorFromPalette(myPalette, colorindex);
     }
     else{
-    leds[lower_LED + i] = color;
+    leds[lower_LED + i] = ColorFromPalette(myPalette, colorindex);
     }
   }
   //draw lower line
@@ -94,7 +103,7 @@ void play_field_animation(int current_field){
     case 0:
     // left neighbor -> Chase to the left
     for (int i = 49; i > -1; i--){
-      leds[i] = color;
+      leds[i] = ColorFromPalette(myPalette, colorindex);
       if(i == 49){
         leds[0] = CRGB::Black;  
       }
@@ -106,12 +115,12 @@ void play_field_animation(int current_field){
     case 1:
     case 6:
     //all
-    fill_solid 	(leds, 150, color);
+    fill_solid 	(leds, 150, ColorFromPalette(myPalette, colorindex));
     FastLED.show();
     break;
     case 2:
     //left side
-    fill_solid 	(leds, 25, color);
+    fill_solid 	(leds, 25, ColorFromPalette(myPalette, colorindex));
     FastLED.show();
     break;
     case 3:
@@ -148,7 +157,7 @@ void play_field_animation(int current_field){
     //simon drinks -> Highlight Simon's position
     fill_solid 	(leds, 150, CRGB::Black);
     for (int i = 0; i < 5; i++){
-        leds[simon-2+i] = color;
+        leds[simon-2+i] = ColorFromPalette(myPalette, colorindex);
     }
     FastLED.show();
     delay(500);
@@ -156,9 +165,9 @@ void play_field_animation(int current_field){
     case 7:
     //right side
     for (int i = 25; i < 50; i++){
-      leds[i] = color;
+      leds[i] = ColorFromPalette(myPalette, colorindex);
     }
-    leds[0] = color;
+    leds[0] = ColorFromPalette(myPalette, colorindex);
     FastLED.show();
     break;
 
@@ -170,7 +179,7 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   delay(3000); // 3 second delay for recovery
-   
+  SetupPalette();
   
   // tell FastLED about the LED strip configuration
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
@@ -183,25 +192,25 @@ void setup() {
   while(not digitalRead(simon_button)){
     fill_solid 	(leds, 150, CRGB::Black);
     int led = angle();
-    leds[led] = color;
+    leds[led] = ColorFromPalette(myPalette, colorindex);
     FastLED.show();
     simon = led;
   }
   //confirm selected Simon
-  leds[simon] = color;
+  leds[simon] = ColorFromPalette(myPalette, colorindex);
   FastLED.show();
   delay(1000);
   leds[simon] = CRGB::Black;
   FastLED.show();
   delay(500);
-  leds[simon] = color;
+  leds[simon] = ColorFromPalette(myPalette, colorindex);
   delay(1000);
   //clear canvas
   fill_solid 	(leds, 150, CRGB::Black);
   FastLED.show();
   //keep dot static until first spin without starting a field animation
   int led = angle();
-  leds[led] = color;
+  leds[led] = ColorFromPalette(myPalette, colorindex);
   FastLED.show();
   while (led == angle()){
     delay(10);
@@ -230,7 +239,7 @@ void loop() {
   }
   else{
     //set current LED
-    leds[current_LED] = color;
+    leds[current_LED] = ColorFromPalette(myPalette, colorindex);
 
     //check if current LED is on a line and turn on line
     int div_line = current_LED % 5;
