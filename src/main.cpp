@@ -16,22 +16,30 @@ CRGB leds[NUM_LEDS];
 #define FRAMES_PER_SECOND  120
 
 //program specific setup
-#define CYCLE_TIME 1 //delay in main loop in ms
-int counter = 0; //used for checking main loop repetitions
-int last_position = 100; //initialize fist comparison position for stationary check
-int compare_position = 100; //initialize second comparison position for stationary check 
-#define direction_offset 270 //If arrow and active LED on board donm't match up, given in degrees, should always be positive
-int simon = 27;
-const int simon_button = 5; // pick a suitable button; configure input pulldown and connect button between GND and chosen pin
+#define CYCLE_TIME 1          //delay in main loop in ms
+int counter = 0;              //used for checking main loop repetitions
+int last_position = 0;        //initialize fist comparison position for stationary check
+int compare_position = 100;   //initialize second comparison position for stationary check 
 
+#define direction_offset 270  //If arrow and active LED on board donm't match up, given in degrees, should always be positive
+int simon = 27;
+const int simon_button = 5;   // pick a suitable button; configure input pulldown and connect button between GND and chosen pin for all of these
+const int color_button = 6;
+const int third_button = 7;
+
+//setting up variables for timing / parallelization
+unsigned long triggerTime = 0;
+unsigned long delayBeforeAnimation = 300;
+
+//set up color palette and variable for current color
 CRGBPalette16 myPalette;
 int colorindex = 16;
 
 void SetupPalette(){
 myPalette = CRGBPalette16(
-                                   CRGB::Red,  CRGB::Blue,  CRGB::Black,  CRGB::Blue,
-                                   CRGB::Blue, CRGB::Blue, CRGB::Blue,  CRGB::Blue,
-                                   CRGB::Blue,  CRGB::Blue,  CRGB::Blue,  CRGB::Blue,
+                                   CRGB::Red,  CRGB::Blue,  CRGB::Green,  CRGB::Magenta,
+                                   CRGB::Orange, CRGB::Yellow, CRGB::Turquoise,  CRGB::LightGreen,
+                                   CRGB::Pink,  CRGB::Lavender,  CRGB::Blue,  CRGB::Blue,
                                    CRGB::Blue, CRGB::Blue, CRGB::Blue,  CRGB::Blue );
 }
 
@@ -47,12 +55,13 @@ int angle() {
 }
 
 bool stationary(int latest_position){
-  //function that checks whether the current position is the same as it was 200-400 ms ago
+  //function that checks whether the current position is the same as it was a few ms ago
   counter = counter + 1;
-  if(counter > 200/CYCLE_TIME){
+  if(counter > 20/CYCLE_TIME && (latest_position != compare_position || latest_position != last_position)){
     counter = 0;
     compare_position = last_position;
     last_position = latest_position;
+    triggerTime = millis();
   }
   //check if last two recorded positions are identical to current position. If only comparing to one it can lead to issues with very fast/slow spin resonating positions
   if(latest_position == compare_position && latest_position == last_position){
@@ -174,7 +183,6 @@ void play_field_animation(int current_field){
   }
 }
 
-
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
@@ -187,8 +195,12 @@ void setup() {
   // set master brightness control
   FastLED.setBrightness(BRIGHTNESS);
 
-  // choose Simon
+  // Set up pins
   pinMode(simon_button, INPUT_PULLUP);
+  pinMode(color_button, INPUT_PULLUP);
+  pinMode(third_button, INPUT_PULLUP);
+
+  // choose Simon
   while(not digitalRead(simon_button)){
     fill_solid 	(leds, 150, CRGB::Black);
     int led = angle();
@@ -219,22 +231,31 @@ void setup() {
 
 void loop() {
   //find current position
-  int current_LED = angle(); 
+  int current_LED = angle();
+  bool stationaryState = stationary(current_LED);
 
-    //Set every LED to black
-  if(not stationary(current_LED)){
+  //Set every LED to black
+  if(not stationaryState){
   fill_solid 	(leds, 150, CRGB::Black);
   }
 
-  if(stationary(current_LED)){
+  //TESTING
+  if (not digitalRead(color_button)){
+    colorindex = colorindex + 1 % 256;
+    delay(5);
+  }
+
+  if(stationaryState){
     int active_field = identify_field(current_LED);
     highlight_field(active_field);
     FastLED.show();
-    delay(300);
-    fill_solid 	(leds, 150, CRGB::Black);
-    FastLED.show();
-    while (current_LED == angle()){
-      play_field_animation(active_field);
+    if((millis() - delayBeforeAnimation) > triggerTime){
+      fill_solid 	(leds, 150, CRGB::Black);
+      FastLED.show();
+      while (current_LED == angle()){
+        play_field_animation(active_field);
+      }
+    
     }
   }
   else{
@@ -242,8 +263,7 @@ void loop() {
     leds[current_LED] = ColorFromPalette(myPalette, colorindex);
 
     //check if current LED is on a line and turn on line
-    int div_line = current_LED % 5;
-    if (div_line == 0) {
+    if (current_LED % 5 == 0) {
       draw_line(current_LED);
     }
   }
