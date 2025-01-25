@@ -107,60 +107,52 @@ void highlight_field(int current_field){
   draw_line(lower_LED + 5);
 }
 
-void play_field_animation(int current_field){
+void play_field_animation(int current_field, int animationStep){
+
   switch (current_field){
     case 0:
     // left neighbor -> Chase to the left
-    for (int i = 49; i > -1; i--){
-      leds[i] = ColorFromPalette(myPalette, colorindex);
-      if(i == 49){
-        leds[0] = CRGB::Black;  
-      }
-      leds[i+1] = CRGB::Black;
-      FastLED.show();
+      leds[49-(animationStep%50)] = ColorFromPalette(myPalette, colorindex);
       delay(20);
-    }
     break;
     case 1:
     case 6:
     //all
     fill_solid 	(leds, 150, ColorFromPalette(myPalette, colorindex));
-    FastLED.show();
     break;
     case 2:
     //left side
     fill_solid 	(leds, 25, ColorFromPalette(myPalette, colorindex));
-    FastLED.show();
     break;
     case 3:
     case 8:
     //you drink -> Flash current field
+    if ((millis()-triggerTime)%(4*delayBeforeAnimation)>600){
     fill_solid 	(leds, 150, CRGB::Black);
-    FastLED.show();
-    delay(500);
+    }
+    else{
     highlight_field(current_field);
-    FastLED.show();
-    delay(500);
+    }
     break;
     case 4:
     case 9:
     //drink and spin again -> Flash field and do a rotating pattern with fields
+    if ((millis()-triggerTime)%(4*delayBeforeAnimation)>600){
     fill_solid 	(leds, 150, CRGB::Black);
     highlight_field(0);
     highlight_field(2);
     highlight_field(4);
     highlight_field(6);
     highlight_field(8);
-    FastLED.show();
-    delay(500);
+    }
+    else{
     fill_solid 	(leds, 150, CRGB::Black);
     highlight_field(1);
     highlight_field(3);
     highlight_field(5);
     highlight_field(7);
     highlight_field(9);
-    FastLED.show();
-    delay(500);
+    }
     break;
     case 5:
     //simon drinks -> Highlight Simon's position
@@ -168,8 +160,6 @@ void play_field_animation(int current_field){
     for (int i = 0; i < 5; i++){
         leds[simon-2+i] = ColorFromPalette(myPalette, colorindex);
     }
-    FastLED.show();
-    delay(500);
     break;
     case 7:
     //right side
@@ -177,7 +167,6 @@ void play_field_animation(int current_field){
       leds[i] = ColorFromPalette(myPalette, colorindex);
     }
     leds[0] = ColorFromPalette(myPalette, colorindex);
-    FastLED.show();
     break;
 
   }
@@ -247,15 +236,16 @@ void loop() {
 
   if(stationaryState){
     int active_field = identify_field(current_LED);
-    highlight_field(active_field);
-    FastLED.show();
+    
     if((millis() - delayBeforeAnimation) > triggerTime){
       fill_solid 	(leds, 150, CRGB::Black);
-      FastLED.show();
-      while (current_LED == angle()){
-        play_field_animation(active_field);
-      }
+      play_field_animation(active_field, counter);
+      
     
+    }
+    else{
+      highlight_field(active_field);
+      FastLED.show();
     }
   }
   else{
