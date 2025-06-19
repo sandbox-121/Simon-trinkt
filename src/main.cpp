@@ -36,11 +36,7 @@ CRGBPalette16 myPalette;
 int colorindex = 16;
 
 void SetupPalette(){
-myPalette = CRGBPalette16(
-                                   CRGB::Red,  CRGB::Blue,  CRGB::Green,  CRGB::Magenta,
-                                   CRGB::Orange, CRGB::Yellow, CRGB::Turquoise,  CRGB::LightGreen,
-                                   CRGB::Pink,  CRGB::Lavender,  CRGB::Blue,  CRGB::Blue,
-                                   CRGB::Blue, CRGB::Blue, CRGB::Blue,  CRGB::Blue );
+myPalette = RainbowColors_p;
 }
 
 int angle() {
@@ -160,6 +156,8 @@ void play_field_animation(int current_field, int animationStep){
     for (int i = 0; i < 5; i++){
         leds[simon-2+i] = ColorFromPalette(myPalette, colorindex);
     }
+    FastLED.show();
+    delay(500);
     break;
     case 7:
     //right side
